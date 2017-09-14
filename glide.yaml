@@ -1,0 +1,3 @@
+package: github.com/vasily-chertkov/repo-versioning
+import:
+- package: github.com/Sirupsen/logrus

@@ -15,8 +15,10 @@ BUILDER       = $(DOCKER_RUNNER) $(DOCKER_BUILDER)
 
 depfiles = $(shell \
 	echo $1 && \
-	$(BECOME) $(BUILDER) sh -c "go list -f '{{if not .Standard}}{{range .GoFiles}}{{print $$.Dir \"/\" .}} {{end}}{{end}}' `go list -f '{{join .Deps " "}}' $1`" \
+	go list -f '{{if not .Standard}}{{range .GoFiles}}{{print $$.Dir "/" .}} {{end}}{{end}}' `go list -f '{{join .Deps " "}}' $1` \
 )
+#TODO: replace the go list call with a call in docker, but the call of this function have to be lazy
+	#$(BECOME) $(BUILDER) sh -c "go list -f '{{if not .Standard}}{{range .GoFiles}}{{print $$.Dir \"/\" .}} {{end}}{{end}}' `go list -f '{{join .Deps " "}}' $1`" \
 
 .PHOHY: clean
 clean:
@@ -43,6 +45,7 @@ docker-image-a: a/a
 
 
 #================= B =====================
+DOCKER_IMAGE_NAME_B := ngp.b
 B_ABSOLUTE_DEPS = $(call depfiles,b/*.go)
 
 b/b: $(B_ABSOLUTE_DEPS)
@@ -54,6 +57,6 @@ docker-image-b: b/b
 	$(eval B_RELATIVE_DEPS="$(B_ABSOLUTE_DEPS:${PWD}/%=%)")
 	$(eval IMAGE_VERSION=$(shell git log -1 --reverse --pretty=format:'%h' "${B_RELATIVE_DEPS}" b))
 	@echo "the last changes in B were in '${IMAGE_VERSION}' version"
-	#$(BECOME) docker build -t example $(REGISTRY)/$(DOCKER_IMAGE_NAME_B):$(IMAGE_VERSION)
+	$(BECOME) docker build -t $(REGISTRY)/$(DOCKER_IMAGE_NAME_B):$(IMAGE_VERSION) b
 #=========================================
 
